@@ -4,7 +4,7 @@
 まずは AR/MR ではなく「位置情報つきの謎解き」で、**実際に街を歩いて最後まで遊びたいか**を確かめるための最小構成です。
 
 - 技術: Vite + React + TypeScript / Supabase（進行状況の保存）/ Vercel（公開）/ GA4（計測）
-- ストーリー: 『灯守の置き手紙』全4ステージ（約30分想定）。街ごとの差し替えは `src/data/story.ts` だけ
+- ストーリー: 『灯守の置き手紙』全4ステージ（約30分想定）。街ごとの差し替えは `story.ts` だけ
 
 ---
 
@@ -46,7 +46,7 @@ npm run build          # 公開用ビルド（Vercel でも同じことが行わ
 
 ---
 
-## 2. 自分の街に合わせる（`src/data/story.ts`）
+## 2. 自分の街に合わせる（`story.ts`）
 
 各ステージの `spot` を実際の場所に書き換えます。
 
@@ -65,7 +65,7 @@ npm run build          # 公開用ビルド（Vercel でも同じことが行わ
 保存する情報は「匿名ID・モード・クリアしたステージ数・ヒント回数・誤答回数・時刻」だけです。名前・メール・**位置情報は保存しません**。
 
 1. https://supabase.com でプロジェクトを作成します（リージョンは東京が近くておすすめ）。
-2. 左メニュー **SQL Editor** → **New query** を開き、`supabase/schema.sql` の中身をすべて貼り付けて **Run**。`Success` と出れば完了です。
+2. 左メニュー **SQL Editor** → **New query** を開き、`schema.sql` の中身をすべて貼り付けて **Run**。`Success` と出れば完了です。
 3. 左メニュー **Authentication** → **Sign In / Providers** を開き、**Allow anonymous sign-ins** を ON にして保存します（画面の表記が少し違うときは「anonymous」で探してください）。
    これで、ユーザーに登録やログインをさせずに遊んでもらえます。
 4. **Project Settings** の **API**（API Keys）画面で、次の2つをコピーします。
@@ -88,7 +88,7 @@ npm run build          # 公開用ビルド（Vercel でも同じことが行わ
 
 > プロジェクト ref（`<your-supabase-project>`）は、ダッシュボードの URL `https://supabase.com/dashboard/project/〇〇〇` の「〇〇〇」の部分です。MVP では Supabase CLI は使わないので、通常は控えておくだけで大丈夫です。
 
-遊んだ人数・クリア率は、Supabase の SQL Editor で `supabase/schema.sql` の末尾にある集計クエリ（コメントアウトされています）を実行すると見られます。
+遊んだ人数・クリア率は、Supabase の SQL Editor で `schema.sql` の末尾にある集計クエリ（コメントアウトされています）を実行すると見られます。
 
 ---
 
@@ -168,7 +168,7 @@ git push -u origin main
 
 ## 9. 公開前チェックリスト
 
-- [ ] `src/data/story.ts` の場所・座標・文言を、実際の街に合わせた
+- [ ] `story.ts` の場所・座標・文言を、実際の街に合わせた
 - [ ] 実際に歩いて、各場所で到着チェックが通ることを確認した
 - [ ] iPhone（Safari）と Android（Chrome）の実機で、最初から最後まで遊べた
 - [ ] 位置情報を拒否した状態でも、最後まで進めた
@@ -184,6 +184,6 @@ src/
   screens/             トップ／謎解き／クリア画面
   lib/                 答えの判定・位置情報・保存（端末／Supabase）・GA4
   App.tsx              画面の切り替えと進行状況の管理
-supabase/schema.sql    テーブルとアクセス制限（RLS）
+schema.sql    テーブルとアクセス制限（RLS）
 scripts/               動作確認スクリプト
 ```

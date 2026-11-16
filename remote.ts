@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Mode } from '../types';
+import type { Mode } from './types';
 
 /**
  * Supabaseへの保存。環境変数が未設定でも、通信に失敗しても、ゲームは止めない。

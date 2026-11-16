@@ -1,4 +1,4 @@
-import type { Story } from '../types';
+import type { Story } from './types';
 
 /**
  * 1つの街・1つの短いストーリー。

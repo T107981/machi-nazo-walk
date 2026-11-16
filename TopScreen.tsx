@@ -1,4 +1,4 @@
-import type { GameState, Mode, Story } from '../types';
+import type { GameState, Mode, Story } from './types';
 
 type Props = {
   story: Story;

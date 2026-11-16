@@ -1,4 +1,4 @@
-import type { Spot } from '../types';
+import type { Spot } from './types';
 
 export type LatLng = { lat: number; lng: number };
 

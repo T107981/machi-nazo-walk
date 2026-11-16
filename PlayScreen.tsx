@@ -1,12 +1,12 @@
 import { useState, type FormEvent } from 'react';
-import type { GameState, Story } from '../types';
-import { isCorrect } from '../lib/normalize';
+import type { GameState, Story } from './types';
+import { isCorrect } from './normalize';
 import {
   geoFailureMessage,
   getCurrentPosition,
   hasCoords,
   isArrived,
-} from '../lib/geo';
+} from './geo';
 
 type Props = {
   story: Story;

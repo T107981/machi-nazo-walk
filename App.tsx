@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { STORY } from './data/story';
+import { STORY } from './story';
 import type { GameState, Mode } from './types';
-import { loadState, saveState } from './lib/storage';
-import { createRemoteSession, updateRemoteSession } from './lib/remote';
-import { track } from './lib/analytics';
-import { TopScreen } from './screens/TopScreen';
-import { PlayScreen } from './screens/PlayScreen';
-import { ClearScreen } from './screens/ClearScreen';
+import { loadState, saveState } from './storage';
+import { createRemoteSession, updateRemoteSession } from './remote';
+import { track } from './analytics';
+import { TopScreen } from './TopScreen';
+import { PlayScreen } from './PlayScreen';
+import { ClearScreen } from './ClearScreen';
 
 type Screen = 'top' | 'play' | 'clear';
 

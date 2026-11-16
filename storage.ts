@@ -1,4 +1,4 @@
-import type { GameState } from '../types';
+import type { GameState } from './types';
 
 // 進行状況を端末内（localStorage）に保存し、再読み込みしても続きから遊べるようにする
 const KEY = 'machi-nazo:v1';
