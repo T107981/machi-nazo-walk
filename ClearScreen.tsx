@@ -21,13 +21,22 @@ export function ClearScreen({ story, state, onRestart, onTop }: Props) {
     <main className="screen clear">
       <div className="lamp lit" aria-hidden="true" />
       <p className="eyebrow">CLEAR</p>
-      <h1>街に灯りが
+      <h1>
+        ゆがみを
         <br />
-        戻りました</h1>
-      <p className="story-title">『{story.title}』</p>
-      <p className="story">
-        三つの欠片が、ひとつの灯りになりました。あなたが歩いた道のりが、街をもう一度照らしています。ご参加ありがとうございました。
+        補正しました
+      </h1>
+      <p className="story-title">
+        {story.episode}『{story.title}』
       </p>
+
+      <p className="story multiline left">{story.epilogue}</p>
+
+      <p className="card-note multiline" aria-label="残されたキーカード">
+        {`KEY CARD　${story.cardNo}\n${story.card}\n\n裏面に刻印：${story.cardEngraving}\n（いまは、意味がわからない）`}
+      </p>
+
+      <p className="story multiline left">{story.next}</p>
 
       <section className="card">
         <h2>あなたの記録</h2>
@@ -45,9 +54,6 @@ export function ClearScreen({ story, state, onRestart, onTop }: Props) {
             <dd>{state.wrongTotal}回</dd>
           </div>
         </dl>
-        {state.mode === 'demo' && (
-          <p className="muted small">デモモードでのクリアです。次は街を歩いて遊んでみてください。</p>
-        )}
       </section>
 
       <div className="actions">

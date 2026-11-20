@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { STORY } from './story';
-import type { GameState, Mode } from './types';
+import type { GameState } from './types';
 import { loadState, saveState } from './storage';
 import { createRemoteSession, updateRemoteSession } from './remote';
 import { track } from './analytics';
@@ -49,13 +49,12 @@ export default function App() {
     syncRemote(next);
   }
 
-  function startGame(mode: Mode) {
+  function startGame() {
     const next: GameState = {
       storyId: STORY.id,
       sessionId: null,
-      mode,
+      mode: 'anywhere',
       stageIndex: 0,
-      arrived: false,
       solved: false,
       hintsShown: 0,
       hintsTotal: 0,
@@ -65,10 +64,10 @@ export default function App() {
     };
     setState(next);
     setScreen('play');
-    track('game_start', { mode, story_id: STORY.id });
+    track('game_start', { mode: next.mode, story_id: STORY.id });
 
     // 保存先の行IDは、取れたときだけあとから反映する
-    void createRemoteSession(STORY.id, mode).then((id) => {
+    void createRemoteSession(STORY.id, next.mode).then((id) => {
       if (!id) return;
       setState((prev) =>
         prev && prev.startedAt === next.startedAt ? { ...prev, sessionId: id } : prev,
@@ -79,11 +78,6 @@ export default function App() {
   function resumeGame() {
     if (!state) return;
     setScreen(state.clearedAt ? 'clear' : 'play');
-  }
-
-  function handleArrived() {
-    if (!state) return;
-    setState({ ...state, arrived: true });
   }
 
   function handleWrong() {
@@ -132,6 +126,8 @@ export default function App() {
       story_id: STORY.id,
     });
     commit({ ...state, solved: true, clearedAt });
+    // クリア画面へすぐ移る（最終ステージは正解後の文章がなく、結末はクリア画面で読む）
+    setScreen('clear');
   }
 
   function handleNext() {
@@ -144,7 +140,6 @@ export default function App() {
     commit({
       ...state,
       stageIndex: state.stageIndex + 1,
-      arrived: false,
       solved: false,
       hintsShown: 0,
     });
@@ -153,19 +148,13 @@ export default function App() {
   return (
     <div className="app">
       {screen === 'top' && (
-        <TopScreen
-          story={STORY}
-          resume={state}
-          onStart={startGame}
-          onResume={resumeGame}
-        />
+        <TopScreen story={STORY} resume={state} onStart={startGame} onResume={resumeGame} />
       )}
       {screen === 'play' && state && (
         <PlayScreen
           key={state.stageIndex}
           story={STORY}
           state={state}
-          onArrived={handleArrived}
           onWrong={handleWrong}
           onSolved={handleSolved}
           onHint={handleHint}
@@ -174,12 +163,7 @@ export default function App() {
         />
       )}
       {screen === 'clear' && state && (
-        <ClearScreen
-          story={STORY}
-          state={state}
-          onRestart={() => startGame(state.mode)}
-          onTop={() => setScreen('top')}
-        />
+        <ClearScreen story={STORY} state={state} onRestart={startGame} onTop={() => setScreen('top')} />
       )}
     </div>
   );

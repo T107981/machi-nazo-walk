@@ -1,43 +1,54 @@
-export type Mode = 'geo' | 'demo';
+export type Mode = 'anywhere';
 
-export type Spot = {
-  /** 画面に表示する場所の名前 */
+/** 謎を解くと手に入る持ち物。あとの謎で使う */
+export type Item = {
+  id: string;
   name: string;
-  /** 場所の説明（実際の街に合わせて書き換える） */
-  description: string;
-  /** 緯度。null の間は「場所の確認なし」で進めます */
-  lat: number | null;
-  /** 経度。null の間は「場所の確認なし」で進めます */
-  lng: number | null;
-  /** 到着とみなす半径（メートル） */
-  radiusM: number;
+  /** 一行の説明 */
+  note: string;
+  /** 持ち物の中身（窓板の図、読む順番など）。改行はそのまま表示される */
+  body: string;
 };
 
 export type Stage = {
   id: string;
   title: string;
-  /** 物語の導入文 */
-  intro: string;
-  spot: Spot;
-  /** 謎の本文 */
+  /** 場面の文章（物語）。空行で段落を分ける */
+  scene: string;
+  /** 目安の場所（どこでも解けるので、あくまで目安） */
+  place: string;
+  /** 謎の本文。改行はそのまま表示される */
   question: string;
-  /** 見せる順番のヒント（最大3つ程度） */
+  /** この謎で使う持ち物のid */
+  uses: string[];
+  /** 見せる順番のヒント */
   hints: string[];
-  /** 正解として受け付ける表記（ひらがな・漢字など複数可） */
+  /** 正解として受け付ける表記 */
   answers: string[];
-  /** 正解したあとに表示する文章（次の手がかり） */
+  /** 正解したあとの文章 */
   reveal: string;
-  /** 正解で手に入る「灯りの欠片」。最終ステージは null */
+  /** 正解で手に入る「ことばの欠片」。最終ステージは null */
   piece: string | null;
+  /** 正解で手に入る持ち物 */
+  item: Item | null;
 };
 
 export type Story = {
   id: string;
   title: string;
+  episode: string;
   lead: string;
   stages: Stage[];
-  /** 最終ステージで見せる、並べ替え前の欠片 */
-  scrambledPieces: string[];
+  /** クリア画面の文章（空行で段落を分ける） */
+  epilogue: string;
+  /** 現場に残されたカード */
+  card: string;
+  /** カードの通し番号（例：No.001） */
+  cardNo: string;
+  /** カード裏の刻印。今は意味がわからない（ずっと先の謎のキー） */
+  cardEngraving: string;
+  /** 次回予告 */
+  next: string;
 };
 
 export type GameState = {
@@ -46,7 +57,6 @@ export type GameState = {
   sessionId: string | null;
   mode: Mode;
   stageIndex: number;
-  arrived: boolean;
   solved: boolean;
   hintsShown: number;
   hintsTotal: number;

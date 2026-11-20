@@ -12,7 +12,7 @@ create table if not exists public.play_sessions (
   user_id        uuid not null default auth.uid()
                    references auth.users (id) on delete cascade,
   story_id       text not null,
-  mode           text not null check (mode in ('geo', 'demo')),
+  mode           text not null check (mode in ('anywhere', 'geo', 'demo')),
   stages_cleared int  not null default 0 check (stages_cleared >= 0),
   hints_used     int  not null default 0 check (hints_used >= 0),
   wrong_answers  int  not null default 0 check (wrong_answers >= 0),

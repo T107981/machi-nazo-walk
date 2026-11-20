@@ -455,3 +455,78 @@ input[type='text']:focus {
     transition: none;
   }
 }
+
+/* ---- 物語の文章・持ち物 ---- */
+.multiline {
+  white-space: pre-line;
+}
+
+.clear .story.left {
+  text-align: left;
+}
+
+.place {
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.uses {
+  color: var(--amber);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.got {
+  color: var(--amber);
+  font-weight: 700;
+}
+
+.question {
+  letter-spacing: 0.04em;
+}
+
+.bag {
+  border-color: #6b5530;
+}
+
+.item {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.item.in-use {
+  border-color: var(--amber);
+  box-shadow: 0 0 14px rgba(255, 184, 77, 0.25);
+}
+
+.item-name {
+  font-weight: 800;
+  color: var(--amber);
+}
+
+.item-body {
+  margin-top: 6px;
+  font-size: 1.15rem;
+  line-height: 1.9;
+  letter-spacing: 0.12em;
+}
+
+.card-note {
+  align-self: center;
+  margin: 8px 0;
+  padding: 18px 22px;
+  border: 1px solid var(--amber);
+  border-radius: 6px;
+  color: var(--amber);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  background: rgba(255, 184, 77, 0.06);
+  transform: rotate(-1.5deg);
+}

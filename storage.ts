@@ -12,7 +12,7 @@ export function loadState(): GameState | null {
     if (
       typeof parsed.storyId !== 'string' ||
       typeof parsed.stageIndex !== 'number' ||
-      (parsed.mode !== 'geo' && parsed.mode !== 'demo')
+      parsed.mode !== 'anywhere'
     ) {
       return null;
     }
