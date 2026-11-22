@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { STORY } from './story';
 import type { GameState } from './types';
-import { loadState, saveState } from './storage';
+import { loadState, saveState, loadName, saveName } from './storage';
+import { NameScreen } from './NameScreen';
 import { createRemoteSession, updateRemoteSession } from './remote';
 import { track } from './analytics';
 import { TitleScreen } from './TitleScreen';
@@ -12,7 +13,7 @@ import { toLines, type Line } from './script';
 import { PlayScreen } from './PlayScreen';
 import { ClearScreen } from './ClearScreen';
 
-type Screen = 'title' | 'home' | 'rules' | 'dialogue' | 'play' | 'clear';
+type Screen = 'title' | 'home' | 'name' | 'rules' | 'dialogue' | 'play' | 'clear';
 /** 会話画面の種類：謎の前 / 謎のあと / 結末 */
 type Scene = 'intro' | 'outro' | 'ending';
 
@@ -37,7 +38,11 @@ function syncRemote(next: GameState): void {
 }
 
 /** いまの会話画面で流すセリフ */
-function linesFor(scene: Scene, stageIndex: number): Line[] {
+function linesFor(scene: Scene, stageIndex: number, name: string): Line[] {
+  return rawLines(scene, stageIndex).map((l) => ({ ...l, text: l.text.split('{name}').join(name) }));
+}
+
+function rawLines(scene: Scene, stageIndex: number): Line[] {
   const stage = STORY.stages[stageIndex];
   if (scene === 'ending') {
     return [...toLines(STORY.epilogue, null), ...toLines(STORY.next, 'mio')];
@@ -52,6 +57,9 @@ export default function App() {
   const [state, setState] = useState<GameState | null>(loadValidState);
   const [screen, setScreen] = useState<Screen>('title');
   const [scene, setScene] = useState<Scene>('intro');
+  const [name, setName] = useState<string | null>(loadName);
+  // 名前画面のあと、ゲームを始めるのか・ホームへ戻るのか
+  const [afterName, setAfterName] = useState<'start' | 'home'>('start');
 
   // 進行状況を端末内に保存（再読み込みしても続きから遊べる）
   useEffect(() => {
@@ -192,16 +200,45 @@ export default function App() {
           resume={state}
           onStartNew={() => setScreen('rules')}
           onResume={resumeGame}
+          codename={name}
+          onEditName={() => {
+            setAfterName('home');
+            setScreen('name');
+          }}
           onBack={() => setScreen('title')}
         />
       )}
+      {screen === 'name' && (
+        <NameScreen
+          initial={name}
+          canCancel={afterName === 'home'}
+          onSubmit={(n) => {
+            saveName(n);
+            setName(n);
+            if (afterName === 'start') startGame();
+            else setScreen('home');
+          }}
+          onCancel={() => setScreen('home')}
+        />
+      )}
       {screen === 'rules' && (
-        <TopScreen story={STORY} onStart={startGame} onBack={() => setScreen('home')} />
+        <TopScreen
+          story={STORY}
+          onStart={() => {
+            if (name) {
+              startGame();
+            } else {
+              setAfterName('start');
+              setScreen('name');
+            }
+          }}
+          onBack={() => setScreen('home')}
+        />
       )}
       {screen === 'dialogue' && state && (
         <DialogueScreen
           key={`${scene}-${state.stageIndex}`}
-          lines={linesFor(scene, state.stageIndex)}
+          lines={linesFor(scene, state.stageIndex, name ?? 'ナナシ')}
           onDone={handleDialogueDone}
         />
       )}

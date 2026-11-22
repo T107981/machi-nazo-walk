@@ -11,12 +11,15 @@ type Props = {
   onStartNew: () => void;
   onResume: () => void;
   onBack: () => void;
+  /** 登録済みのコードネーム（未登録は null） */
+  codename: string | null;
+  onEditName: () => void;
 };
 
 type View = 'home' | 'notice' | 'cards' | 'supply' | 'help';
 
 /** 補正者の端末のホーム画面 */
-export function HomeScreen({ story, resume, onStartNew, onResume, onBack }: Props) {
+export function HomeScreen({ story, resume, onStartNew, onResume, onBack, codename, onEditName }: Props) {
   const [view, setView] = useState<View>('home');
   const [asked, setAsked] = useState(false);
   const total = story.stages.length;
@@ -34,7 +37,9 @@ export function HomeScreen({ story, resume, onStartNew, onResume, onBack }: Prop
         <Skyline />
         <div className="hm-status">
           <span className="hm-terminal">ADJUSTER TERMINAL</span>
-          <span className="hm-code">ナナシ（仮）</span>
+          <button type="button" className="hm-code" onClick={onEditName} aria-label="コードネームを変更">
+            {codename ?? '未登録'}　✎
+          </button>
         </div>
       </div>
 
