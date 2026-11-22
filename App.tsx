@@ -4,11 +4,16 @@ import type { GameState } from './types';
 import { loadState, saveState } from './storage';
 import { createRemoteSession, updateRemoteSession } from './remote';
 import { track } from './analytics';
+import { TitleScreen } from './TitleScreen';
 import { TopScreen } from './TopScreen';
+import { DialogueScreen } from './DialogueScreen';
+import { toLines, type Line } from './script';
 import { PlayScreen } from './PlayScreen';
 import { ClearScreen } from './ClearScreen';
 
-type Screen = 'top' | 'play' | 'clear';
+type Screen = 'title' | 'rules' | 'dialogue' | 'play' | 'clear';
+/** 会話画面の種類：謎の前 / 謎のあと / 結末 */
+type Scene = 'intro' | 'outro' | 'ending';
 
 /** 保存されていた進行状況が、今のストーリーで使えるか確認する */
 function loadValidState(): GameState | null {
@@ -30,9 +35,22 @@ function syncRemote(next: GameState): void {
   });
 }
 
+/** いまの会話画面で流すセリフ */
+function linesFor(scene: Scene, stageIndex: number): Line[] {
+  const stage = STORY.stages[stageIndex];
+  if (scene === 'ending') {
+    return [...toLines(STORY.epilogue, null), ...toLines(STORY.next, 'mio')];
+  }
+  if (scene === 'outro') return toLines(stage.reveal, 'mio');
+  // 第1話の最初だけ、導入（差出人不明の通知）から始める
+  if (stageIndex === 0) return [...toLines(STORY.lead, 'unknown'), ...toLines(stage.scene, 'mio')];
+  return toLines(stage.scene, 'mio');
+}
+
 export default function App() {
   const [state, setState] = useState<GameState | null>(loadValidState);
-  const [screen, setScreen] = useState<Screen>('top');
+  const [screen, setScreen] = useState<Screen>('title');
+  const [scene, setScene] = useState<Scene>('intro');
 
   // 進行状況を端末内に保存（再読み込みしても続きから遊べる）
   useEffect(() => {
@@ -42,7 +60,7 @@ export default function App() {
   // 画面や問題が切り替わったら、いちばん上へ戻す
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [screen, state?.stageIndex]);
+  }, [screen, scene, state?.stageIndex]);
 
   function commit(next: GameState) {
     setState(next);
@@ -63,7 +81,8 @@ export default function App() {
       clearedAt: null,
     };
     setState(next);
-    setScreen('play');
+    setScene('intro');
+    setScreen('dialogue');
     track('game_start', { mode: next.mode, story_id: STORY.id });
 
     // 保存先の行IDは、取れたときだけあとから反映する
@@ -77,7 +96,16 @@ export default function App() {
 
   function resumeGame() {
     if (!state) return;
-    setScreen(state.clearedAt ? 'clear' : 'play');
+    const isFinal = state.stageIndex === STORY.stages.length - 1;
+    if (state.clearedAt) {
+      setScreen('clear');
+    } else if (state.solved && !isFinal) {
+      // 正解した直後に閉じていた場合は、正解後の会話から
+      setScene('outro');
+      setScreen('dialogue');
+    } else {
+      setScreen('play');
+    }
   }
 
   function handleWrong() {
@@ -109,6 +137,8 @@ export default function App() {
 
     if (!isFinal) {
       commit({ ...state, solved: true });
+      setScene('outro');
+      setScreen('dialogue');
       return;
     }
 
@@ -126,29 +156,49 @@ export default function App() {
       story_id: STORY.id,
     });
     commit({ ...state, solved: true, clearedAt });
-    // クリア画面へすぐ移る（最終ステージは正解後の文章がなく、結末はクリア画面で読む）
-    setScreen('clear');
+    // 結末の会話へ（読み終わるとクリア画面）
+    setScene('ending');
+    setScreen('dialogue');
   }
 
-  function handleNext() {
+  /** 会話画面を読み終えたとき */
+  function handleDialogueDone() {
     if (!state) return;
-    const isFinal = state.stageIndex === STORY.stages.length - 1;
-    if (isFinal) {
+    if (scene === 'ending') {
       setScreen('clear');
-      return;
+    } else if (scene === 'outro') {
+      commit({
+        ...state,
+        stageIndex: state.stageIndex + 1,
+        solved: false,
+        hintsShown: 0,
+      });
+      setScene('intro');
+      // 次の謎の前の会話へ（画面は 'dialogue' のまま）
+    } else {
+      setScreen('play');
     }
-    commit({
-      ...state,
-      stageIndex: state.stageIndex + 1,
-      solved: false,
-      hintsShown: 0,
-    });
   }
 
   return (
     <div className="app">
-      {screen === 'top' && (
-        <TopScreen story={STORY} resume={state} onStart={startGame} onResume={resumeGame} />
+      {screen === 'title' && (
+        <TitleScreen
+          story={STORY}
+          resume={state}
+          onStart={() => setScreen('rules')}
+          onResume={resumeGame}
+        />
+      )}
+      {screen === 'rules' && (
+        <TopScreen story={STORY} onStart={startGame} onBack={() => setScreen('title')} />
+      )}
+      {screen === 'dialogue' && state && (
+        <DialogueScreen
+          key={`${scene}-${state.stageIndex}`}
+          lines={linesFor(scene, state.stageIndex)}
+          onDone={handleDialogueDone}
+        />
       )}
       {screen === 'play' && state && (
         <PlayScreen
@@ -158,12 +208,11 @@ export default function App() {
           onWrong={handleWrong}
           onSolved={handleSolved}
           onHint={handleHint}
-          onNext={handleNext}
-          onBack={() => setScreen('top')}
+          onBack={() => setScreen('title')}
         />
       )}
       {screen === 'clear' && state && (
-        <ClearScreen story={STORY} state={state} onRestart={startGame} onTop={() => setScreen('top')} />
+        <ClearScreen story={STORY} state={state} onRestart={() => setScreen('rules')} onTop={() => setScreen('title')} />
       )}
     </div>
   );

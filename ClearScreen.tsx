@@ -30,13 +30,11 @@ export function ClearScreen({ story, state, onRestart, onTop }: Props) {
         {story.episode}『{story.title}』
       </p>
 
-      <p className="story multiline left">{story.epilogue}</p>
-
       <p className="card-note multiline" aria-label="残されたキーカード">
         {`KEY CARD　${story.cardNo}\n${story.card}\n\n裏面に刻印：${story.cardEngraving}\n（いまは、意味がわからない）`}
       </p>
 
-      <p className="story multiline left">{story.next}</p>
+      <p className="story">第1話　完</p>
 
       <section className="card">
         <h2>あなたの記録</h2>

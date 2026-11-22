@@ -1,30 +1,18 @@
-import type { GameState, Story } from './types';
+import type { Story } from './types';
 
 type Props = {
   story: Story;
-  /** 保存されている進行状況（なければ null） */
-  resume: GameState | null;
   onStart: () => void;
-  onResume: () => void;
+  onBack: () => void;
 };
 
-export function TopScreen({ story, resume, onStart, onResume }: Props) {
+export function TopScreen({ story, onStart, onBack }: Props) {
   const total = story.stages.length;
-  const cleared = resume ? resume.stageIndex + (resume.solved ? 1 : 0) : 0;
 
   return (
     <main className="screen top">
-      <div className="lamp" aria-hidden="true" />
-      <p className="eyebrow">没入型謎解きアドベンチャー</p>
-      <h1>
-        日常に
-        <br />
-        ワクワクを
-      </h1>
-      <p className="story-title">
-        {story.episode}『{story.title}』
-      </p>
-      <p className="story">{story.lead}</p>
+      <p className="eyebrow">はじめに</p>
+      <h1 className="rules-title">遊ぶ前に</h1>
 
       <section className="card">
         <h2>遊び方</h2>
@@ -52,20 +40,12 @@ export function TopScreen({ story, resume, onStart, onResume }: Props) {
       </section>
 
       <div className="actions">
-        {resume ? (
-          <>
-            <button type="button" className="btn primary" onClick={onResume}>
-              {resume.clearedAt ? 'クリア画面を見る' : `つづきから（${cleared}/${total}）`}
-            </button>
-            <button type="button" className="btn ghost" onClick={onStart}>
-              最初からはじめる
-            </button>
-          </>
-        ) : (
-          <button type="button" className="btn primary" onClick={onStart}>
-            物語をはじめる
-          </button>
-        )}
+        <button type="button" className="btn primary" onClick={onStart}>
+          物語をはじめる
+        </button>
+        <button type="button" className="btn ghost" onClick={onBack}>
+          タイトルへ戻る
+        </button>
       </div>
     </main>
   );

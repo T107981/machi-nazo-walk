@@ -8,14 +8,12 @@ type Props = {
   onWrong: () => void;
   onSolved: () => void;
   onHint: () => void;
-  onNext: () => void;
   onBack: () => void;
 };
 
-export function PlayScreen({ story, state, onWrong, onSolved, onHint, onNext, onBack }: Props) {
+export function PlayScreen({ story, state, onWrong, onSolved, onHint, onBack }: Props) {
   const stage = story.stages[state.stageIndex];
   const total = story.stages.length;
-  const isFinal = state.stageIndex === total - 1;
 
   const [answer, setAnswer] = useState('');
   const [wrongTick, setWrongTick] = useState(0);
@@ -43,7 +41,7 @@ export function PlayScreen({ story, state, onWrong, onSolved, onHint, onNext, on
     <main className="screen play">
       <header className="play-header">
         <button type="button" className="link" onClick={onBack}>
-          ← トップへ
+          ← タイトルへ
         </button>
         <ol className="dots" aria-label={`ステージ ${state.stageIndex + 1} / ${total}`}>
           {story.stages.map((s, i) => {
@@ -58,8 +56,6 @@ export function PlayScreen({ story, state, onWrong, onSolved, onHint, onNext, on
         {story.episode}　{state.stageIndex + 1} / {total}
       </p>
       <h2 className="stage-title">{stage.title}</h2>
-      <p className="story multiline">{stage.scene}</p>
-
       <p className="place">目安の場所：{stage.place}</p>
 
       <section className="card puzzle">
@@ -128,16 +124,7 @@ export function PlayScreen({ story, state, onWrong, onSolved, onHint, onNext, on
                 : `ヒントを見る（${state.hintsShown}/${stage.hints.length}）`}
             </button>
           </>
-        ) : (
-          <div className="reveal" role="status">
-            <p className="correct">正解！</p>
-            {stage.reveal && <p className="story multiline">{stage.reveal}</p>}
-            {stage.item && <p className="got">持ち物が増えました：{stage.item.name}</p>}
-            <button type="button" className="btn primary" onClick={onNext}>
-              {isFinal ? '結末へ' : '次へ'}
-            </button>
-          </div>
-        )}
+        ) : null}
       </section>
 
       {hasBag && (
