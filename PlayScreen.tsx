@@ -41,7 +41,7 @@ export function PlayScreen({ story, state, onWrong, onSolved, onHint, onBack }: 
     <main className="screen play">
       <header className="play-header">
         <button type="button" className="link" onClick={onBack}>
-          ← タイトルへ
+          ← ホームへ
         </button>
         <ol className="dots" aria-label={`ステージ ${state.stageIndex + 1} / ${total}`}>
           {story.stages.map((s, i) => {

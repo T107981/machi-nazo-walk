@@ -6,12 +6,13 @@ import { createRemoteSession, updateRemoteSession } from './remote';
 import { track } from './analytics';
 import { TitleScreen } from './TitleScreen';
 import { TopScreen } from './TopScreen';
+import { HomeScreen } from './HomeScreen';
 import { DialogueScreen } from './DialogueScreen';
 import { toLines, type Line } from './script';
 import { PlayScreen } from './PlayScreen';
 import { ClearScreen } from './ClearScreen';
 
-type Screen = 'title' | 'rules' | 'dialogue' | 'play' | 'clear';
+type Screen = 'title' | 'home' | 'rules' | 'dialogue' | 'play' | 'clear';
 /** 会話画面の種類：謎の前 / 謎のあと / 結末 */
 type Scene = 'intro' | 'outro' | 'ending';
 
@@ -183,15 +184,19 @@ export default function App() {
   return (
     <div className="app">
       {screen === 'title' && (
-        <TitleScreen
+        <TitleScreen story={STORY} onStart={() => setScreen('home')} />
+      )}
+      {screen === 'home' && (
+        <HomeScreen
           story={STORY}
           resume={state}
-          onStart={() => setScreen('rules')}
+          onStartNew={() => setScreen('rules')}
           onResume={resumeGame}
+          onBack={() => setScreen('title')}
         />
       )}
       {screen === 'rules' && (
-        <TopScreen story={STORY} onStart={startGame} onBack={() => setScreen('title')} />
+        <TopScreen story={STORY} onStart={startGame} onBack={() => setScreen('home')} />
       )}
       {screen === 'dialogue' && state && (
         <DialogueScreen
@@ -208,11 +213,11 @@ export default function App() {
           onWrong={handleWrong}
           onSolved={handleSolved}
           onHint={handleHint}
-          onBack={() => setScreen('title')}
+          onBack={() => setScreen('home')}
         />
       )}
       {screen === 'clear' && state && (
-        <ClearScreen story={STORY} state={state} onRestart={() => setScreen('rules')} onTop={() => setScreen('title')} />
+        <ClearScreen story={STORY} state={state} onRestart={() => setScreen('rules')} onTop={() => setScreen('home')} />
       )}
     </div>
   );

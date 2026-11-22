@@ -44,7 +44,7 @@ export function TopScreen({ story, onStart, onBack }: Props) {
           物語をはじめる
         </button>
         <button type="button" className="btn ghost" onClick={onBack}>
-          タイトルへ戻る
+          ホームへ戻る
         </button>
       </div>
     </main>

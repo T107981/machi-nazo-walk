@@ -1,4 +1,5 @@
 import type { GameState, Story } from './types';
+import { NextSection } from './NextSection';
 
 type Props = {
   story: Story;
@@ -54,12 +55,14 @@ export function ClearScreen({ story, state, onRestart, onTop }: Props) {
         </dl>
       </section>
 
+      <NextSection clearedAt={state.clearedAt} storyId={story.id} />
+
       <div className="actions">
         <button type="button" className="btn primary" onClick={onRestart}>
           もう一度、最初から遊ぶ
         </button>
         <button type="button" className="btn ghost" onClick={onTop}>
-          トップへ戻る
+          ホームへ戻る
         </button>
       </div>
     </main>
