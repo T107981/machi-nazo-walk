@@ -1,6 +1,7 @@
-import { useState, type KeyboardEvent } from 'react';
+import { useEffect, useState, type KeyboardEvent } from 'react';
 import { speakerName, type Line, type Speaker } from './script';
 import ryukaImg from './ryuka.webp';
+import { arConfirmed, arPreferred, rememberArConfirmed, useCameraBg } from './useAR';
 
 type Props = {
   lines: Line[];
@@ -46,11 +47,19 @@ function Portrait({ speaker }: { speaker: Exclude<Speaker, null | 'system'> }) {
 export function DialogueScreen({ lines, history = [], onDone }: Props) {
   const [index, setIndex] = useState(0);
   const [showLog, setShowLog] = useState(false);
+  const [askAr, setAskAr] = useState(false);
+  const ar = useCameraBg();
+  const { start: arStart } = ar;
+
+  // 前回ARをオンにしていたら、続けてオンにする
+  useEffect(() => {
+    if (arPreferred() && arConfirmed()) void arStart();
+  }, [arStart]);
   const line = lines[index];
   const isLast = index >= lines.length - 1;
 
   function advance() {
-    if (showLog) return;
+    if (showLog || askAr) return;
     if (isLast) onDone();
     else setIndex((i) => i + 1);
   }
@@ -77,7 +86,27 @@ export function DialogueScreen({ lines, history = [], onDone }: Props) {
       onClick={advance}
       onKeyDown={handleKey}
     >
+      {ar.on && (
+        <>
+          <video ref={ar.videoRef} className="dlg-video" playsInline muted autoPlay />
+          <div className="dlg-video-shade" aria-hidden="true" />
+        </>
+      )}
+
       <div className="dlg-top">
+        <button
+          type="button"
+          className={`dlg-btn ${ar.on ? 'on' : ''}`}
+          aria-pressed={ar.on}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (ar.on) ar.stop();
+            else if (arConfirmed()) void ar.start();
+            else setAskAr(true);
+          }}
+        >
+          AR {ar.on ? 'ON' : 'OFF'}
+        </button>
         <button
           type="button"
           className="dlg-btn"
@@ -101,8 +130,43 @@ export function DialogueScreen({ lines, history = [], onDone }: Props) {
       </div>
 
       <div className="dlg-stage">
-        {isTalk && <Portrait speaker={line.speaker as Exclude<Speaker, null | 'system'>} />}
+        {isTalk && (
+          <div
+            className="ar-anchor"
+            style={ar.on ? { transform: `translate(${ar.offset.x}px, ${ar.offset.y}px)` } : undefined}
+          >
+            <Portrait speaker={line.speaker as Exclude<Speaker, null | 'system'>} />
+          </div>
+        )}
       </div>
+
+      {ar.error && <p className="dlg-toast" role="status">{ar.error}</p>}
+
+      {askAr && (
+        <div className="dlg-ask" role="dialog" aria-label="ARを使う前に" onClick={(e) => e.stopPropagation()}>
+          <p className="label">ARを使う前に</p>
+          <ul className="notes small">
+            <li>カメラとスマホの向きのセンサーを使います。映像は、画面に表示するだけで、保存も送信もしません。</li>
+            <li>歩きながら使わないでください。人にカメラを向けないでください。</li>
+          </ul>
+          <div className="actions">
+            <button
+              type="button"
+              className="btn primary"
+              onClick={() => {
+                rememberArConfirmed();
+                setAskAr(false);
+                void ar.start();
+              }}
+            >
+              ARをオンにする
+            </button>
+            <button type="button" className="btn ghost" onClick={() => setAskAr(false)}>
+              やめる
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className={`dlg-box ${line.speaker === 'system' ? 'system' : ''}`}>
         {name && <p className="dlg-name">{name}</p>}

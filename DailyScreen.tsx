@@ -26,13 +26,13 @@ export function DailyScreen({ onBack }: Props) {
           ← {item ? '一覧へ' : 'ホームへ'}
         </button>
       </header>
-      <p className="eyebrow">EVERYDAY MYSTERY</p>
-      <h1 className="rules-title">日常謎</h1>
+      <p className="eyebrow">REPAIR SHOP</p>
+      <h1 className="rules-title">想い修理屋</h1>
 
       {!item && (
         <>
           <p className="story">
-            カサナリアで汚れてしまった、誰かの大切なもの。その場で、小さな謎を解いて、想いをとりもどそう。
+            カサナリアで汚れてしまった、誰かの大切な「預かりもの」。ここは、リュカと開いた修理屋。小さな謎をひも解いて、持ち主の想いを、直してあげよう。
           </p>
           <ul className="daily-list">
             {DAILY_ITEMS.map((d) => (
@@ -44,7 +44,7 @@ export function DailyScreen({ onBack }: Props) {
                 >
                   <span className="daily-name">{d.name}</span>
                   <span className="muted small">持ち主：{d.owner}</span>
-                  <span className="badge">{done.includes(d.id) ? '直った' : 'くすんでいる'}</span>
+                  <span className="badge">{done.includes(d.id) ? '直った' : '修理待ち'}</span>
                 </button>
               </li>
             ))}
@@ -84,7 +84,7 @@ function DailyDetail({ item, restored, onSolved }: { item: DailyItem; restored: 
 
       {ok ? (
         <div className="reveal" role="status">
-          <p className="correct">直った！</p>
+          <p className="correct">修理完了！</p>
           <p className="story multiline">{item.restored}</p>
         </div>
       ) : (

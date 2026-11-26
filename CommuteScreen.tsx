@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { DialogueScreen } from './DialogueScreen';
 import { toLines, type Line } from './script';
 import { isCorrect } from './normalize';
+import type { SubPuzzle } from './commute';
 import { track } from './analytics';
 import {
   buildToday,
@@ -43,6 +44,8 @@ export function CommuteScreen({ name, dev = false, onBack }: Props) {
   const [step, setStep] = useState(0);
   const [offer, setOffer] = useState('');
   const [subIdx, setSubIdx] = useState(0);
+  /** サブストーリーの進み具合：0=導入 1=謎1 2=途中 3=謎2 4=結末 */
+  const [subStep, setSubStep] = useState(0);
 
   const today = todayKey();
   // 開発モードでは、1日1回の制限をなくす
@@ -65,16 +68,23 @@ export function CommuteScreen({ name, dev = false, onBack }: Props) {
     );
   }
 
-  if (phase === 'sub' && save.route) {
-    const story = SUB_STORIES[subIdx];
-    const text = story.text.split('{station}').join(offer).split('{name}').join(name);
+  const subStory = SUB_STORIES[subIdx];
+  const fill = (text: string) => text.split('{station}').join(offer).split('{name}').join(name);
+
+  if (phase === 'sub' && save.route && subStep % 2 === 0) {
+    const text = [subStory.intro, '', subStory.mid, '', subStory.outro][subStep];
     return (
       <DialogueScreen
-        lines={toLines(text)}
+        key={`${subIdx}-${subStep}`}
+        lines={toLines(fill(text))}
         onDone={() => {
-          update({ ...save, feelings: save.feelings + 1 });
-          track('area_sub_clear', { story: subIdx + 1 });
-          setPhase('done');
+          if (subStep >= 4) {
+            update({ ...save, feelings: save.feelings + 1 });
+            track('area_sub_clear', { story: subIdx + 1 });
+            setPhase('done');
+          } else {
+            setSubStep(subStep + 1);
+          }
         }}
       />
     );
@@ -156,6 +166,7 @@ export function CommuteScreen({ name, dev = false, onBack }: Props) {
                     onClick={() => {
                       if (save.route) setOffer(pickOfferStation(save.route));
                       setSubIdx(i);
+                      setSubStep(0);
                       setPhase('sub');
                     }}
                   >
@@ -202,6 +213,15 @@ export function CommuteScreen({ name, dev = false, onBack }: Props) {
         />
       )}
 
+      {phase === 'sub' && save.route && subStep % 2 === 1 && (
+        <SubPuzzleCard
+          key={`${subIdx}-${subStep}`}
+          label={`${subStory.title}　${subStep === 1 ? '1' : '2'} / 2`}
+          puzzle={fill_(subStep === 1 ? subStory.p1 : subStory.p2, fill)}
+          onSolved={() => setSubStep(subStep + 1)}
+        />
+      )}
+
       {phase === 'offer' && (
         <section className="card">
           <p className="eyebrow">補正完了　＋　連絡</p>
@@ -209,10 +229,10 @@ export function CommuteScreen({ name, dev = false, onBack }: Props) {
             ミオ：『今日の補正、お疲れさま。……ひとつ連絡。{offer}駅のあたりで、小さなゆがみを感知したの。降りられそう？』
           </p>
           <p className="muted small">
-            降りるのは、時間と安全に余裕があるときだけにしてください。登録した駅は定期の範囲内のはずですが、ご自身の定期の範囲をご確認ください。ホームでは歩きながらスマホを見ないでください。
+            降りると、少し長めの補正（5〜10分くらい）になります。降りるのは、時間と安全に余裕があるときだけにしてください。登録した駅は定期の範囲内のはずですが、ご自身の定期の範囲をご確認ください。ホームでは歩きながらスマホを見ないでください。
           </p>
           <div className="actions">
-            <button type="button" className="btn primary" onClick={() => { track('area_offer', { choice: 'get_off' }); setPhase('sub'); }}>
+            <button type="button" className="btn primary" onClick={() => { track('area_offer', { choice: 'get_off' }); setSubStep(0); setPhase('sub'); }}>
               {offer}駅で降りる
             </button>
             <button type="button" className="btn ghost" onClick={() => { track('area_offer', { choice: 'skip' }); setPhase('declined'); }}>
@@ -343,6 +363,59 @@ function MissionView({ route, step, onNext }: { route: Route; step: number; onNe
           {hint && <p className="hints"><span className="hint-no">ヒント</span>{mission.hint}</p>}
           <button type="button" className="btn secondary" onClick={() => setHint(true)} disabled={hint}>
             {hint ? 'ヒントを表示しました' : 'ヒントを見る'}
+          </button>
+        </>
+      )}
+    </section>
+  );
+}
+
+function fill_(p: SubPuzzle, fill: (t: string) => string): SubPuzzle {
+  return { ...p, question: fill(p.question), hints: p.hints.map(fill) as SubPuzzle['hints'] };
+}
+
+/** 途中下車のサブストーリーの謎（「降りない」より、手ごたえのある謎） */
+function SubPuzzleCard({ label, puzzle, onSolved }: { label: string; puzzle: SubPuzzle; onSolved: () => void }) {
+  const [answer, setAnswer] = useState('');
+  const [wrong, setWrong] = useState(0);
+  const [hints, setHints] = useState(0);
+  const [ok, setOk] = useState(false);
+
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (answer.trim() === '') return;
+    if (isCorrect(answer, puzzle.answers)) setOk(true);
+    else setWrong((n) => n + 1);
+  }
+
+  return (
+    <section className="card puzzle">
+      <p className="eyebrow">{label}</p>
+      <h2 className="stage-title">{puzzle.title}</h2>
+      <p className="question multiline">{puzzle.question}</p>
+      {ok ? (
+        <div className="reveal" role="status">
+          <p className="correct">正解！</p>
+          <button type="button" className="btn primary" onClick={onSolved}>つづきへ</button>
+        </div>
+      ) : (
+        <>
+          <form onSubmit={handleSubmit} className="answer-form">
+            <label htmlFor="subans" className="label">こたえ</label>
+            <input id="subans" type="text" lang="ja" value={answer} onChange={(e) => setAnswer(e.target.value)}
+              autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false} />
+            <button type="submit" className="btn primary" disabled={answer.trim() === ''}>回答する</button>
+          </form>
+          {wrong > 0 && <p key={wrong} className="feedback wrong" role="status">おしい！ちがうみたい。もう一度考えてみよう。</p>}
+          {hints > 0 && (
+            <ul className="hints">
+              {puzzle.hints.slice(0, hints).map((h, i) => (
+                <li key={i}><span className="hint-no">ヒント{i + 1}</span>{h}</li>
+              ))}
+            </ul>
+          )}
+          <button type="button" className="btn secondary" onClick={() => setHints((n) => n + 1)} disabled={hints >= 3}>
+            {hints >= 3 ? 'ヒントはすべて表示しました' : `ヒントを見る（${hints}/3）`}
           </button>
         </>
       )}
