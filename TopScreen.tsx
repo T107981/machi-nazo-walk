@@ -11,13 +11,13 @@ export function TopScreen({ story, onStart, onBack }: Props) {
 
   return (
     <main className="screen top">
-      <p className="eyebrow">はじめに</p>
+      <p className="eyebrow">KASANARIA</p>
       <h1 className="rules-title">遊ぶ前に</h1>
 
       <section className="card">
         <h2>遊び方</h2>
         <ol className="steps">
-          <li>通信で案内されながら、物語に出てくる謎を1つずつ解いていきます。</li>
+          <li>リュカとミオに案内されながら、物語に出てくる謎を1つずつ解いていきます。</li>
           <li>謎を解くと「持ち物」が手に入ります。持ち物は、あとの謎で使います。</li>
           <li>全部で{total}問。約30分の物語です。場所は選びません。</li>
         </ol>

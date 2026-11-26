@@ -1,4 +1,4 @@
-// 通勤補正モード：定期区間の登録と、「今日の補正」の中身を作る
+// 活動範囲モード：いつもの区間の登録と、「今日の補正」の中身を作る
 // 駅名・区間は、この端末の中だけに保存する（サーバーや計測には送らない）
 
 export type Route = {
@@ -11,6 +11,8 @@ export type CommuteSave = {
   route: Route | null;
   stamps: number;
   lastDone: string | null;
+  /** 途中下車して助けた「想い」の数 */
+  feelings: number;
 };
 
 const KEY = 'machi-nazo:commute:v1';
@@ -38,7 +40,7 @@ export function parseVia(raw: string): string[] {
 }
 
 export function loadCommute(): CommuteSave {
-  const empty: CommuteSave = { route: null, stamps: 0, lastDone: null };
+  const empty: CommuteSave = { route: null, stamps: 0, lastDone: null, feelings: 0 };
   try {
     if (typeof localStorage === 'undefined') return empty;
     const raw = localStorage.getItem(KEY);
@@ -53,6 +55,7 @@ export function loadCommute(): CommuteSave {
       route: route && route.from && route.to ? route : null,
       stamps: typeof p.stamps === 'number' && p.stamps >= 0 ? Math.floor(p.stamps) : 0,
       lastDone: typeof p.lastDone === 'string' ? p.lastDone : null,
+      feelings: typeof p.feelings === 'number' && p.feelings >= 0 ? Math.floor(p.feelings) : 0,
     };
   } catch {
     return empty;
@@ -149,4 +152,36 @@ export function buildToday(route: Route, d: Date = new Date()): Mission[] {
     { kind: 'watch', ...w },
     { kind: 'puzzle', ...b },
   ];
+}
+
+/** 途中下車の提案に使う駅を、登録した駅のなかからランダムに選ぶ */
+export function pickOfferStation(route: Route, rnd: () => number = Math.random): string {
+  const all = [route.from, ...route.via, route.to];
+  return all[Math.floor(rnd() * all.length)];
+}
+
+/**
+ * 途中下車したときのサブストーリー（助けた人の想い）。
+ * {station} は降りた駅、{name} はコードネームに置きかわる。
+ */
+export const SUB_STORIES: Array<{ title: string; text: string }> = [
+  {
+    title: 'ベンチの伝言',
+    text:
+      'ミオ『{station}のホームに、ごく小さなゆがみ。……聞こえる？』\n\nベンチの端に、小さな光のゆがみがあった。その中から、かすかな声がする。\n\n「毎朝、同じ電車で会う人がいる。話しかけたいけど、あとで、って思い続けて、もう半年」\n\n{name}は、そっとうなずいた。\n\nリュカ『{name}、ひとことだけでいい。その気持ちを、ほどいてやれ。「おはよう」って言う練習をな』\n\nゆがみは、朝の光のようにほどけて、消えた。\n\nミオ『ありがとう。きっと明日、誰かが「おはよう」って言える』',
+  },
+  {
+    title: '改札の落とし物',
+    text:
+      'リュカ『おい、{name}。{station}の改札のそばだ。にごった気持ちが、ひとつ引っかかってる』\n\n改札の脇の柱に、うすく曇った光がはりついていた。\n\n「ごめん、って言いたかった。言えないまま、あの人は引っ越してしまった」\n\nミオ『伝えられなかった「ごめん」……。この手の想いは、放っておくとにごりやすいの』\n\n{name}は、光に向かって、静かに言った。「ちゃんと、届いてるよ」\n\n曇りが晴れて、光は、きれいな白にもどった。\n\nリュカ『やるじゃねえか。言えなかった言葉も、受けとってもらえれば、軽くなるんだ』',
+  },
+  {
+    title: 'ホームの夕焼け',
+    text:
+      'ミオ『{station}の反対側のホームに、やわらかいゆがみ。危険はなさそう』\n\nホームの端で、夕焼け色の光がゆれている。\n\n「昔、ここで、友だちと見た景色が好きだった。もう一度、見たいなって思ってるだけなんだ」\n\nリュカ『ただの「また見たい」だ。こういうのは、しばらく一緒に眺めてやれば、満足して消える』\n\n{name}は、光の隣で、少しのあいだ、空を見ていた。\n\n光は、ふわりと空にのぼって、見えなくなった。\n\nミオ『……ありがとう。今日も、誰かの大切な景色が、守られたね』',
+  },
+];
+
+export function pickSubStory(rnd: () => number = Math.random): number {
+  return Math.floor(rnd() * SUB_STORIES.length);
 }

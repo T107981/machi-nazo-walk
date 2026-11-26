@@ -4,8 +4,7 @@ import { NextSection } from './NextSection';
 type Props = {
   story: Story;
   state: GameState;
-  onRestart: () => void;
-  onTop: () => void;
+  onHome: () => void;
 };
 
 function minutesBetween(startIso: string, endIso: string | null): number {
@@ -15,7 +14,7 @@ function minutesBetween(startIso: string, endIso: string | null): number {
   return Math.max(1, Math.round((end - start) / 60000));
 }
 
-export function ClearScreen({ story, state, onRestart, onTop }: Props) {
+export function ClearScreen({ story, state, onHome }: Props) {
   const minutes = minutesBetween(state.startedAt, state.clearedAt);
 
   return (
@@ -58,11 +57,8 @@ export function ClearScreen({ story, state, onRestart, onTop }: Props) {
       <NextSection clearedAt={state.clearedAt} storyId={story.id} />
 
       <div className="actions">
-        <button type="button" className="btn primary" onClick={onRestart}>
-          もう一度、最初から遊ぶ
-        </button>
-        <button type="button" className="btn ghost" onClick={onTop}>
-          ホームへ戻る
+        <button type="button" className="btn primary" onClick={onHome}>
+          ホームへ
         </button>
       </div>
     </main>

@@ -29,6 +29,8 @@ export type Stage = {
   reveal: string;
   /** 正解で手に入る「ことばの欠片」。最終ステージは null */
   piece: string | null;
+  /** 「仲間に協力を求める」で出る、答えにかなり近いヒント */
+  ally: string;
   /** 正解で手に入る持ち物 */
   item: Item | null;
 };
@@ -63,4 +65,8 @@ export type GameState = {
   wrongTotal: number;
   startedAt: string;
   clearedAt: string | null;
+  /** この謎で「仲間に協力を求める」を使ったか */
+  allyUsed?: boolean;
+  /** この謎の前の会話を読み終えたか（途中で閉じても、続きの謎から再開できる） */
+  introSeen?: boolean;
 };

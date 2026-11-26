@@ -1,12 +1,12 @@
 :root {
-  --bg: #0f1226;
-  --bg-glow: #2a2f66;
-  --surface: #181d3b;
-  --surface-2: #212850;
-  --line: #333b78;
+  --bg: #0b1233;
+  --bg-glow: #2c4a8f;
+  --surface: #131c44;
+  --surface-2: #1b2758;
+  --line: #34498a;
   --text: #f4efe4;
   --muted: #aab0d0;
-  --amber: #ffb84d;
+  --amber: #ffd070;
   --amber-strong: #ff9f1a;
   --ok: #7bdca0;
   --warn: #ff9a9a;
@@ -955,4 +955,232 @@ input[type='text']:focus {
 }
 .done-card {
   text-align: center;
+}
+
+/* ===== カサナリア（キービジュアルに合わせた見た目） ===== */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.screen.title {
+  padding: 0;
+  margin: calc(-20px - env(safe-area-inset-top)) -16px -20px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  position: relative;
+  overflow: hidden;
+  background: #0b1233;
+}
+.title-kv {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center 40%;
+  animation: dlg-in 0.8s ease both;
+}
+.title-bg {
+  position: absolute;
+  inset: -30px;
+  width: calc(100% + 60px);
+  height: calc(100% + 60px);
+  object-fit: cover;
+  filter: blur(26px) brightness(0.7) saturate(1.2);
+}
+.title-tap {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  z-index: 1;
+}
+.title-tap .btn {
+  width: 100%;
+  backdrop-filter: blur(4px);
+  animation: dlg-blink 1.8s ease-in-out infinite;
+}
+.hm-hero {
+  height: 220px;
+  background: #0b1233;
+}
+.hm-kv {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 44%;
+  display: block;
+  filter: saturate(1.05);
+}
+.hm-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(11, 18, 51, 0.55), rgba(11, 18, 51, 0) 35%, rgba(11, 18, 51, 0.95));
+}
+.hm-status {
+  z-index: 1;
+}
+.hm-eps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.hm-ep-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(11, 18, 51, 0.5);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.hm-ep-row.soon {
+  opacity: 0.7;
+}
+.hm-ep-no {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  color: var(--amber);
+}
+.hm-ep-btn {
+  width: auto;
+  white-space: nowrap;
+  padding: 8px 14px;
+}
+.card,
+.hm-tile,
+.hm-main {
+  backdrop-filter: blur(2px);
+}
+
+/* 会話：リュカ（妖精）とミオ（通信窓） */
+.portrait.ryuka {
+  width: 42%;
+  max-width: 190px;
+  margin-bottom: 18px;
+  animation: dlg-in 0.35s ease both, ryuka-float 3s ease-in-out infinite;
+  filter: drop-shadow(0 0 18px rgba(255, 208, 112, 0.7));
+}
+.portrait.ryuka svg * {
+  fill: #ffe39a;
+  opacity: 0.95;
+}
+@keyframes ryuka-float {
+  50% {
+    transform: translateY(-8px);
+  }
+}
+.comm {
+  position: absolute;
+  top: 56px;
+  right: 16px;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  border: 2px solid var(--teal);
+  background: rgba(19, 28, 68, 0.92);
+  box-shadow: 0 0 16px rgba(127, 232, 255, 0.4);
+  overflow: hidden;
+  animation: dlg-in 0.3s ease both;
+}
+.comm svg {
+  width: 100%;
+  height: 100%;
+}
+.comm svg * {
+  fill: #6d86d6;
+}
+.comm-label {
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  color: var(--teal);
+}
+.dlg-top {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  z-index: 2;
+}
+.dlg-btn {
+  background: rgba(11, 18, 51, 0.7);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 4px 14px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.dlg-skip {
+  display: none;
+}
+.dlg-log {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  padding: calc(16px + env(safe-area-inset-top)) 16px 16px;
+  background: rgba(8, 12, 36, 0.96);
+  cursor: default;
+}
+.dlg-log-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.dlg-log-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.dlg-log-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.dlg-log-list li.narr {
+  color: var(--muted);
+}
+.log-name {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--amber);
+}
+.ally {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+.ally-text {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--teal);
+  border-radius: 12px;
+  background: rgba(127, 232, 255, 0.08);
 }

@@ -1,34 +1,20 @@
-import type { Story } from './types';
-import { Skyline } from './Skyline';
+import kv from './kv.jpg';
 
 type Props = {
-  story: Story;
   onStart: () => void;
 };
 
-/** 最初に出るタイトル画面（一枚絵の上にタイトルを重ねる） */
-export function TitleScreen({ story, onStart }: Props) {
+/** タイトル画面：キービジュアルを全面に出し、タップでホーム（初回は第1話）へ進むだけ */
+export function TitleScreen({ onStart }: Props) {
   return (
     <main className="screen title" onClick={onStart}>
-      <div className="title-art">
-        <Skyline />
-      </div>
-      <div className="title-body">
-        <p className="eyebrow">没入型謎解きアドベンチャー</p>
-        <h1 className="title-call">
-          日常に
-          <br />
-          ワクワクを
-        </h1>
-        <p className="story-title">
-          {story.episode}『{story.title}』
-        </p>
-      </div>
-      <div className="actions">
+      <h1 className="sr-only">カサナリア</h1>
+      <img className="title-bg" src={kv} alt="" aria-hidden="true" />
+      <img className="title-kv" src={kv} alt="カサナリア　この場所には、もうひとつのセカイがある" />
+      <div className="title-tap">
         <button type="button" className="btn primary" onClick={onStart}>
-          START
+          TAP TO START
         </button>
-        <p className="muted small tap">画面のどこかをタップ</p>
       </div>
     </main>
   );

@@ -1,12 +1,15 @@
 import { useState, type FormEvent } from 'react';
 import { DialogueScreen } from './DialogueScreen';
-import type { Line } from './script';
+import { toLines, type Line } from './script';
 import { isCorrect } from './normalize';
 import { track } from './analytics';
 import {
   buildToday,
   cleanStation,
   loadCommute,
+  pickOfferStation,
+  pickSubStory,
+  SUB_STORIES,
   parseVia,
   saveCommute,
   todayKey,
@@ -17,25 +20,28 @@ import {
 } from './commute';
 
 type Props = {
+  name: string;
   onBack: () => void;
 };
 
-type Phase = 'menu' | 'setup' | 'intro' | 'mission' | 'done';
+type Phase = 'menu' | 'setup' | 'intro' | 'mission' | 'offer' | 'sub' | 'declined' | 'done';
 
 function introLines(route: Route): Line[] {
   const way = [route.from, ...route.via, route.to].join(' → ');
   return [
-    { speaker: 'mio', text: '通信、つながった？　ここからは、あなたの持ち場の話。' },
-    { speaker: 'mio', text: `毎日通る道にも、小さな歪はできる。登録された区間は、${way}。` },
-    { speaker: 'mio', text: '電車の中でやる、短い補正。音は消して、周りの迷惑にならないようにね。' },
+    { speaker: 'mio', text: 'こちらミオ。ここからは、あなたの活動範囲の話。' },
+    { speaker: 'mio', text: `毎日通る道にも、小さなゆがみはできる。登録された区間は、${way}。` },
+    { speaker: 'ryuka', text: '電車の中でも、できることはあるぜ。短い補正だ。音は消して、周りの迷惑にならないようにな！' },
   ];
 }
 
-/** 通勤補正モード（第1話クリアで解放）。定期区間の中で遊べる短い補正 */
-export function CommuteScreen({ onBack }: Props) {
+/** 活動範囲モード（第1話クリアで解放）。いつもの区間の中で遊べる短い補正 */
+export function CommuteScreen({ name, onBack }: Props) {
   const [save, setSave] = useState<CommuteSave>(loadCommute);
   const [phase, setPhase] = useState<Phase>(save.route ? 'menu' : 'setup');
   const [step, setStep] = useState(0);
+  const [offer, setOffer] = useState('');
+  const [subIdx, setSubIdx] = useState(0);
 
   const today = todayKey();
   const doneToday = save.lastDone === today;
@@ -57,6 +63,21 @@ export function CommuteScreen({ onBack }: Props) {
     );
   }
 
+  if (phase === 'sub' && save.route) {
+    const story = SUB_STORIES[subIdx];
+    const text = story.text.split('{station}').join(offer).split('{name}').join(name);
+    return (
+      <DialogueScreen
+        lines={toLines(text)}
+        onDone={() => {
+          update({ ...save, feelings: save.feelings + 1 });
+          track('area_sub_clear', { story: subIdx + 1 });
+          setPhase('done');
+        }}
+      />
+    );
+  }
+
   return (
     <main className="screen commute">
       <header className="play-header">
@@ -64,15 +85,15 @@ export function CommuteScreen({ onBack }: Props) {
           ← ホームへ
         </button>
       </header>
-      <p className="eyebrow">COMMUTE ADJUST</p>
-      <h1 className="rules-title">通勤補正</h1>
+      <p className="eyebrow">ACTIVITY AREA</p>
+      <h1 className="rules-title">活動範囲</h1>
 
       {phase === 'setup' && (
         <SetupForm
           initial={save.route}
           onSubmit={(route) => {
             update({ ...save, route });
-            track('commute_register', { via_count: route.via.length });
+            track('area_register', { via_count: route.via.length });
             setPhase('menu');
           }}
           onCancel={save.route ? () => setPhase('menu') : onBack}
@@ -93,6 +114,7 @@ export function CommuteScreen({ onBack }: Props) {
           <section className="card">
             <p className="label">補正スタンプ</p>
             <p className="stamps">{save.stamps} 個</p>
+            <p className="muted small">助けた想い：{save.feelings} 件</p>
             {doneToday ? (
               <p className="muted small">今日の補正は完了しました。明日、また新しい補正が届きます。</p>
             ) : (
@@ -116,7 +138,7 @@ export function CommuteScreen({ onBack }: Props) {
               className="btn primary"
               disabled={doneToday}
               onClick={() => {
-                track('commute_start');
+                track('area_start');
                 setPhase('intro');
               }}
             >
@@ -135,8 +157,10 @@ export function CommuteScreen({ onBack }: Props) {
             if (step >= 2) {
               const stamps = save.stamps + 1;
               update({ ...save, stamps, lastDone: today });
-              track('commute_clear', { stamps });
-              setPhase('done');
+              track('area_clear', { stamps });
+              if (save.route) setOffer(pickOfferStation(save.route));
+              setSubIdx(pickSubStory());
+              setPhase('offer');
             } else {
               setStep(step + 1);
             }
@@ -144,10 +168,40 @@ export function CommuteScreen({ onBack }: Props) {
         />
       )}
 
+      {phase === 'offer' && (
+        <section className="card">
+          <p className="eyebrow">補正完了　＋　連絡</p>
+          <p className="story">
+            ミオ：『今日の補正、お疲れさま。……ひとつ連絡。{offer}駅のあたりで、小さなゆがみを感知したの。降りられそう？』
+          </p>
+          <p className="muted small">
+            降りるのは、時間と安全に余裕があるときだけにしてください。登録した駅は定期の範囲内のはずですが、ご自身の定期の範囲をご確認ください。ホームでは歩きながらスマホを見ないでください。
+          </p>
+          <div className="actions">
+            <button type="button" className="btn primary" onClick={() => { track('area_offer', { choice: 'get_off' }); setPhase('sub'); }}>
+              {offer}駅で降りる
+            </button>
+            <button type="button" className="btn ghost" onClick={() => { track('area_offer', { choice: 'skip' }); setPhase('declined'); }}>
+              今日は降りない
+            </button>
+          </div>
+        </section>
+      )}
+
+      {phase === 'declined' && (
+        <section className="card done-card">
+          <p className="story">ミオ：『了解。他のアジャスターに要請をかけておくわ。無理は禁物よ』</p>
+          <button type="button" className="btn primary" onClick={() => setPhase('menu')}>
+            もどる
+          </button>
+        </section>
+      )}
+
       {phase === 'done' && (
         <section className="card done-card">
           <p className="correct">補正完了！</p>
-          <p className="story">ミオ：『歪は、いまのところ静か。……ありがとう、また明日』</p>
+          <p className="story">ミオ：『ゆがみは、いまのところ静か。……ありがとう、また明日』</p>
+          <p className="muted small">助けた想い：{save.feelings} 件</p>
           <p className="stamps">補正スタンプ {save.stamps} 個</p>
           <button type="button" className="btn primary" onClick={() => setPhase('menu')}>
             もどる

@@ -46,12 +46,25 @@ function linesFor(scene: Scene, stageIndex: number, name: string): Line[] {
 function rawLines(scene: Scene, stageIndex: number): Line[] {
   const stage = STORY.stages[stageIndex];
   if (scene === 'ending') {
-    return [...toLines(STORY.epilogue, null), ...toLines(STORY.next, 'mio')];
+    return [...toLines(STORY.epilogue), ...toLines(STORY.next)];
   }
-  if (scene === 'outro') return toLines(stage.reveal, 'mio');
-  // 第1話の最初だけ、導入（差出人不明の通知）から始める
-  if (stageIndex === 0) return [...toLines(STORY.lead, 'unknown'), ...toLines(stage.scene, 'mio')];
-  return toLines(stage.scene, 'mio');
+  if (scene === 'outro') return toLines(stage.reveal);
+  // 第1話の最初だけ、導入から始める
+  if (stageIndex === 0) return [...toLines(STORY.lead), ...toLines(stage.scene)];
+  return toLines(stage.scene);
+}
+
+/** 会話ログ用：いまの場面より前に読んだ会話すべて */
+function historyFor(scene: Scene, stageIndex: number, name: string): Line[] {
+  const out: Line[] = [];
+  for (let i = 0; i < stageIndex; i++) {
+    out.push(...linesFor('intro', i, name), ...linesFor('outro', i, name));
+  }
+  if (scene === 'outro') out.push(...linesFor('intro', stageIndex, name));
+  if (scene === 'ending') {
+    out.push(...linesFor('intro', stageIndex, name));
+  }
+  return out;
 }
 
 export default function App() {
@@ -104,11 +117,27 @@ export default function App() {
     });
   }
 
+  /** タイトルをタップしたとき：初回は第1話が自動で始まる。クリア後はホームへ */
+  function handleTitleStart() {
+    if (!state) {
+      setScreen('rules');
+    } else if (!state.clearedAt) {
+      resumeGame();
+    } else {
+      setScreen('home');
+    }
+  }
+
   function resumeGame() {
     if (!state) return;
     const isFinal = state.stageIndex === STORY.stages.length - 1;
+    const introUnread = !state.solved && !state.introSeen;
     if (state.clearedAt) {
       setScreen('clear');
+    } else if (introUnread) {
+      // この謎の前の会話を、まだ読み終えていないとき
+      setScene('intro');
+      setScreen('dialogue');
     } else if (state.solved && !isFinal) {
       // 正解した直後に閉じていた場合は、正解後の会話から
       setScene('outro');
@@ -133,6 +162,11 @@ export default function App() {
       hintsShown: state.hintsShown + 1,
       hintsTotal: state.hintsTotal + 1,
     });
+  }
+
+  function handleAlly() {
+    if (!state) return;
+    commit({ ...state, allyUsed: true });
   }
 
   function handleSolved() {
@@ -182,25 +216,28 @@ export default function App() {
         stageIndex: state.stageIndex + 1,
         solved: false,
         hintsShown: 0,
+        allyUsed: false,
+        introSeen: false,
       });
       setScene('intro');
       // 次の謎の前の会話へ（画面は 'dialogue' のまま）
     } else {
+      commit({ ...state, introSeen: true });
       setScreen('play');
     }
   }
 
+  const codename = name ?? 'ナナシ';
+
   return (
     <div className="app">
-      {screen === 'title' && (
-        <TitleScreen story={STORY} onStart={() => setScreen('home')} />
-      )}
+      {screen === 'title' && <TitleScreen onStart={handleTitleStart} />}
       {screen === 'home' && (
         <HomeScreen
           story={STORY}
           resume={state}
-          onStartNew={() => setScreen('rules')}
           onResume={resumeGame}
+          onStartNew={() => setScreen('rules')}
           codename={name}
           onCommute={() => setScreen('commute')}
           onEditName={() => {
@@ -210,7 +247,7 @@ export default function App() {
           onBack={() => setScreen('title')}
         />
       )}
-      {screen === 'commute' && <CommuteScreen onBack={() => setScreen('home')} />}
+      {screen === 'commute' && <CommuteScreen name={codename} onBack={() => setScreen('home')} />}
       {screen === 'name' && (
         <NameScreen
           initial={name}
@@ -235,13 +272,14 @@ export default function App() {
               setScreen('name');
             }
           }}
-          onBack={() => setScreen('home')}
+          onBack={() => setScreen('title')}
         />
       )}
       {screen === 'dialogue' && state && (
         <DialogueScreen
           key={`${scene}-${state.stageIndex}`}
-          lines={linesFor(scene, state.stageIndex, name ?? 'ナナシ')}
+          lines={linesFor(scene, state.stageIndex, codename)}
+          history={historyFor(scene, state.stageIndex, codename)}
           onDone={handleDialogueDone}
         />
       )}
@@ -253,11 +291,12 @@ export default function App() {
           onWrong={handleWrong}
           onSolved={handleSolved}
           onHint={handleHint}
-          onBack={() => setScreen('home')}
+          onAlly={handleAlly}
+          onBack={() => setScreen('title')}
         />
       )}
       {screen === 'clear' && state && (
-        <ClearScreen story={STORY} state={state} onRestart={() => setScreen('rules')} onTop={() => setScreen('home')} />
+        <ClearScreen story={STORY} state={state} onHome={() => setScreen('home')} />
       )}
     </div>
   );

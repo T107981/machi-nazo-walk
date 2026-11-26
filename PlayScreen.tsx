@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import type { GameState, Item, Story } from './types';
 import { isCorrect } from './normalize';
+import { currentEnergy, spendEnergy, ENERGY_MAX } from './energy';
+import { track } from './analytics';
 
 type Props = {
   story: Story;
@@ -8,15 +10,29 @@ type Props = {
   onWrong: () => void;
   onSolved: () => void;
   onHint: () => void;
+  onAlly: () => void;
   onBack: () => void;
 };
 
-export function PlayScreen({ story, state, onWrong, onSolved, onHint, onBack }: Props) {
+export function PlayScreen({ story, state, onWrong, onSolved, onHint, onAlly, onBack }: Props) {
   const stage = story.stages[state.stageIndex];
   const total = story.stages.length;
 
   const [answer, setAnswer] = useState('');
   const [wrongTick, setWrongTick] = useState(0);
+  const [energy, setEnergy] = useState(currentEnergy);
+  const [allyEmpty, setAllyEmpty] = useState(false);
+
+  function handleAlly() {
+    if (spendEnergy()) {
+      setEnergy(currentEnergy());
+      track('ally_used', { stage_index: state.stageIndex + 1, story_id: story.id });
+      onAlly();
+    } else {
+      setEnergy(currentEnergy());
+      setAllyEmpty(true);
+    }
+  }
 
   // これまでに手に入れたもの（この謎を解いた直後は、その分も含める）
   const doneCount = state.stageIndex + (state.solved ? 1 : 0);
@@ -123,6 +139,27 @@ export function PlayScreen({ story, state, onWrong, onSolved, onHint, onBack }: 
                 ? 'ヒントはすべて表示しました'
                 : `ヒントを見る（${state.hintsShown}/${stage.hints.length}）`}
             </button>
+
+            {state.hintsShown >= stage.hints.length && (
+              <div className="ally">
+                {state.allyUsed ? (
+                  <p className="ally-text multiline">{stage.ally}</p>
+                ) : (
+                  <>
+                    <button type="button" className="btn secondary" onClick={handleAlly}>
+                      仲間に協力を求める（協力ゲージ {'●'.repeat(energy)}
+                      {'○'.repeat(ENERGY_MAX - energy)}）
+                    </button>
+                    <p className="muted small">協力ゲージを1つ使います。時間がたつと回復します。</p>
+                    {allyEmpty && (
+                      <p className="feedback wrong" role="status">
+                        協力ゲージが足りません。しばらくしてから、もう一度試してください。
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
           </>
         ) : null}
       </section>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { GameState, Story } from './types';
-import { Skyline } from './Skyline';
+import kv from './kv.jpg';
 import { NOTICES, HELP_ITEMS } from './home-data';
 import { track } from './analytics';
 
@@ -36,9 +36,9 @@ export function HomeScreen({ story, resume, onStartNew, onResume, onBack, codena
   return (
     <main className="screen home">
       <div className="hm-hero">
-        <Skyline />
+        <img className="hm-kv" src={kv} alt="" />
         <div className="hm-status">
-          <span className="hm-terminal">ADJUSTER TERMINAL</span>
+          <span className="hm-terminal">KASANARIA</span>
           <button type="button" className="hm-code" onClick={onEditName} aria-label="コードネームを変更">
             {codename ?? '未登録'}　✎
           </button>
@@ -49,28 +49,34 @@ export function HomeScreen({ story, resume, onStartNew, onResume, onBack, codena
         <>
           <section className="hm-main" aria-label="メインストーリー">
             <p className="hm-tag">MAIN STORY</p>
-            <h2 className="hm-ep">
-              {story.episode}『{story.title}』
-            </h2>
-            <ol className="dots" aria-label={`進み具合 ${cleared} / ${total}`}>
-              {story.stages.map((s, i) => (
-                <li key={s.id} className={i < cleared ? 'done' : i === cleared ? 'current' : ''} />
-              ))}
-            </ol>
-            {resume ? (
-              <div className="actions">
-                <button type="button" className="btn primary" onClick={onResume}>
-                  {resume.clearedAt ? 'クリア画面を見る' : `つづきから（${cleared}/${total}）`}
-                </button>
-                <button type="button" className="btn ghost" onClick={onStartNew}>
-                  はじめから
-                </button>
-              </div>
-            ) : (
-              <button type="button" className="btn primary" onClick={onStartNew}>
-                通信に応答する
-              </button>
-            )}
+            <ul className="hm-eps">
+              <li className="hm-ep-row">
+                <div>
+                  <p className="hm-ep-no">{story.episode}</p>
+                  <p className="hm-ep">{story.title}</p>
+                </div>
+                {resume?.clearedAt ? (
+                  <button type="button" className="btn secondary hm-ep-btn" onClick={onResume}>
+                    クリア済み
+                  </button>
+                ) : resume ? (
+                  <button type="button" className="btn primary hm-ep-btn" onClick={onResume}>
+                    つづきから（{cleared}/{total}）
+                  </button>
+                ) : (
+                  <button type="button" className="btn primary hm-ep-btn" onClick={onStartNew}>
+                    はじめる
+                  </button>
+                )}
+              </li>
+              <li className="hm-ep-row soon">
+                <div>
+                  <p className="hm-ep-no">第2話</p>
+                  <p className="hm-ep">？？？</p>
+                </div>
+                <span className="badge">COMING SOON</span>
+              </li>
+            </ul>
           </section>
 
           <div className="hm-grid">
@@ -106,9 +112,9 @@ export function HomeScreen({ story, resume, onStartNew, onResume, onBack, codena
             }}
           >
             <span className="hm-tile-ico">⇄</span>
-            <span className="hm-tile-name">通勤補正</span>
+            <span className="hm-tile-name">活動範囲</span>
             <span className="hm-sub">
-              {hasCard ? '定期の区間で遊べる、電車の中の短い補正' : '第1話をクリアすると解放されます'}
+              {hasCard ? 'いつもの区間で遊べる、短い補正' : '第1話をクリアすると解放されます'}
             </span>
           </button>
 
