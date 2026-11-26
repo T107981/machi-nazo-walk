@@ -932,3 +932,27 @@ input[type='text']:focus {
   color: var(--text);
   cursor: pointer;
 }
+
+/* ===== 通勤補正 ===== */
+.hm-wide {
+  width: 100%;
+}
+.hm-tile.locked {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.route {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 4px 0;
+  line-height: 1.6;
+}
+.stamps {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--amber);
+  margin: 4px 0;
+}
+.done-card {
+  text-align: center;
+}

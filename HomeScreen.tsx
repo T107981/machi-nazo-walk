@@ -14,12 +14,14 @@ type Props = {
   /** 登録済みのコードネーム（未登録は null） */
   codename: string | null;
   onEditName: () => void;
+  /** 通勤補正モードを開く（第1話クリアで解放） */
+  onCommute: () => void;
 };
 
 type View = 'home' | 'notice' | 'cards' | 'supply' | 'help';
 
 /** 補正者の端末のホーム画面 */
-export function HomeScreen({ story, resume, onStartNew, onResume, onBack, codename, onEditName }: Props) {
+export function HomeScreen({ story, resume, onStartNew, onResume, onBack, codename, onEditName, onCommute }: Props) {
   const [view, setView] = useState<View>('home');
   const [asked, setAsked] = useState(false);
   const total = story.stages.length;
@@ -93,6 +95,22 @@ export function HomeScreen({ story, resume, onStartNew, onResume, onBack, codena
               <span className="hm-sub">遊び方・安全</span>
             </button>
           </div>
+
+          <button
+            type="button"
+            className={`hm-tile hm-wide ${hasCard ? '' : 'locked'}`}
+            disabled={!hasCard}
+            onClick={() => {
+              track('home_tile', { tile: 'commute' });
+              onCommute();
+            }}
+          >
+            <span className="hm-tile-ico">⇄</span>
+            <span className="hm-tile-name">通勤補正</span>
+            <span className="hm-sub">
+              {hasCard ? '定期の区間で遊べる、電車の中の短い補正' : '第1話をクリアすると解放されます'}
+            </span>
+          </button>
 
           <button type="button" className="link" onClick={onBack}>
             ← タイトルへ

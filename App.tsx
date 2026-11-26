@@ -8,12 +8,13 @@ import { track } from './analytics';
 import { TitleScreen } from './TitleScreen';
 import { TopScreen } from './TopScreen';
 import { HomeScreen } from './HomeScreen';
+import { CommuteScreen } from './CommuteScreen';
 import { DialogueScreen } from './DialogueScreen';
 import { toLines, type Line } from './script';
 import { PlayScreen } from './PlayScreen';
 import { ClearScreen } from './ClearScreen';
 
-type Screen = 'title' | 'home' | 'name' | 'rules' | 'dialogue' | 'play' | 'clear';
+type Screen = 'title' | 'home' | 'commute' | 'name' | 'rules' | 'dialogue' | 'play' | 'clear';
 /** 会話画面の種類：謎の前 / 謎のあと / 結末 */
 type Scene = 'intro' | 'outro' | 'ending';
 
@@ -201,6 +202,7 @@ export default function App() {
           onStartNew={() => setScreen('rules')}
           onResume={resumeGame}
           codename={name}
+          onCommute={() => setScreen('commute')}
           onEditName={() => {
             setAfterName('home');
             setScreen('name');
@@ -208,6 +210,7 @@ export default function App() {
           onBack={() => setScreen('title')}
         />
       )}
+      {screen === 'commute' && <CommuteScreen onBack={() => setScreen('home')} />}
       {screen === 'name' && (
         <NameScreen
           initial={name}
