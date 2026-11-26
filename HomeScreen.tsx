@@ -14,14 +14,21 @@ type Props = {
   /** 登録済みのコードネーム（未登録は null） */
   codename: string | null;
   onEditName: () => void;
-  /** 通勤補正モードを開く（第1話クリアで解放） */
+  /** 各モードを開く */
   onCommute: () => void;
+  onDaily: () => void;
+  onBigRift: () => void;
+  onAR: () => void;
+  /** 開発モード用 */
+  dev: boolean;
+  onDevClear: () => void;
+  onDevWipe: () => void;
 };
 
 type View = 'home' | 'notice' | 'cards' | 'supply' | 'help';
 
 /** 補正者の端末のホーム画面 */
-export function HomeScreen({ story, resume, onStartNew, onResume, onBack, codename, onEditName, onCommute }: Props) {
+export function HomeScreen({ story, resume, onStartNew, onResume, onBack, codename, onEditName, onCommute, onDaily, onBigRift, onAR, dev, onDevClear, onDevWipe }: Props) {
   const [view, setView] = useState<View>('home');
   const [asked, setAsked] = useState(false);
   const total = story.stages.length;
@@ -90,6 +97,32 @@ export function HomeScreen({ story, resume, onStartNew, onResume, onBack, codena
               <span className="hm-tile-name">キーカード</span>
               <span className="hm-sub">{hasCard ? '1 / ?' : '0 / ?'}</span>
             </button>
+            <button
+              type="button"
+              className={`hm-tile ${hasCard ? '' : 'locked'}`}
+              disabled={!hasCard}
+              onClick={() => {
+                track('home_tile', { tile: 'area' });
+                onCommute();
+              }}
+            >
+              <span className="hm-tile-ico">⇄</span>
+              <span className="hm-tile-name">活動範囲</span>
+              <span className="hm-sub">{hasCard ? 'いつもの区間で' : '第1話クリアで解放'}</span>
+            </button>
+            <button
+              type="button"
+              className={`hm-tile ${hasCard ? '' : 'locked'}`}
+              disabled={!hasCard}
+              onClick={() => {
+                track('home_tile', { tile: 'daily' });
+                onDaily();
+              }}
+            >
+              <span className="hm-tile-ico">✧</span>
+              <span className="hm-tile-name">日常謎</span>
+              <span className="hm-sub">{hasCard ? 'その場で直す' : '第1話クリアで解放'}</span>
+            </button>
             <button type="button" className="hm-tile" onClick={() => open('supply')}>
               <span className="hm-tile-ico">⬡</span>
               <span className="hm-tile-name">補給</span>
@@ -104,19 +137,44 @@ export function HomeScreen({ story, resume, onStartNew, onResume, onBack, codena
 
           <button
             type="button"
-            className={`hm-tile hm-wide ${hasCard ? '' : 'locked'}`}
+            className={`hm-tile hm-wide hm-big ${hasCard ? '' : 'locked'}`}
             disabled={!hasCard}
             onClick={() => {
-              track('home_tile', { tile: 'commute' });
-              onCommute();
+              track('home_tile', { tile: 'bigrift' });
+              onBigRift();
             }}
           >
-            <span className="hm-tile-ico">⇄</span>
-            <span className="hm-tile-name">活動範囲</span>
-            <span className="hm-sub">
-              {hasCard ? 'いつもの区間で遊べる、短い補正' : '第1話をクリアすると解放されます'}
-            </span>
+            <span className="hm-tile-ico">◉</span>
+            <span className="hm-tile-name">大きなゆがみに挑む</span>
+            <span className="hm-sub">{hasCard ? '決まった場所へ行って挑む（位置情報）' : '第1話をクリアすると解放されます'}</span>
           </button>
+
+          <button
+            type="button"
+            className="hm-tile hm-wide"
+            onClick={() => {
+              track('home_tile', { tile: 'ar' });
+              onAR();
+            }}
+          >
+            <span className="hm-tile-ico">◎</span>
+            <span className="hm-tile-name">リュカにARで会う</span>
+            <span className="hm-sub">カメラ越しの景色に、リュカが現れる</span>
+          </button>
+
+          {dev && (
+            <section className="card dev-panel" aria-label="開発モード">
+              <p className="label">DEV 開発モード（?dev=0 で解除）</p>
+              <div className="actions">
+                <button type="button" className="btn secondary" onClick={onDevClear}>
+                  第1話をクリア済みにする
+                </button>
+                <button type="button" className="btn ghost" onClick={onDevWipe}>
+                  保存データをすべて消す
+                </button>
+              </div>
+            </section>
+          )}
 
           <button type="button" className="link" onClick={onBack}>
             ← タイトルへ

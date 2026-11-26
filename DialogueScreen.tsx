@@ -1,5 +1,6 @@
 import { useState, type KeyboardEvent } from 'react';
 import { speakerName, type Line, type Speaker } from './script';
+import ryukaImg from './ryuka.webp';
 
 type Props = {
   lines: Line[];
@@ -9,9 +10,8 @@ type Props = {
 };
 
 /**
- * 立ち絵（いまは仮のシルエット）と、タップで進む会話画面。
- * 立ち絵の画像ができたら、Portrait の中身を <img> に差し替えるだけで使える。
- *  リュカ … 画面の中央に浮かぶ妖精
+ * 立ち絵と、タップで進む会話画面。
+ *  リュカ … 画面の中央に浮かぶ妖精（画像）
  *  ミオ   … 通信窓（右上の小さな丸い窓）
  */
 function Portrait({ speaker }: { speaker: Exclude<Speaker, null | 'system'> }) {
@@ -29,11 +29,7 @@ function Portrait({ speaker }: { speaker: Exclude<Speaker, null | 'system'> }) {
   if (speaker === 'ryuka') {
     return (
       <div className="portrait ryuka" aria-hidden="true">
-        <svg viewBox="0 0 200 200">
-          <ellipse cx="56" cy="70" rx="26" ry="40" transform="rotate(-25 56 70)" />
-          <ellipse cx="144" cy="70" rx="26" ry="40" transform="rotate(25 144 70)" />
-          <circle cx="100" cy="116" r="54" />
-        </svg>
+        <img src={ryukaImg} alt="" />
       </div>
     );
   }

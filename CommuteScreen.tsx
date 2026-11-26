@@ -21,6 +21,7 @@ import {
 
 type Props = {
   name: string;
+  dev?: boolean;
   onBack: () => void;
 };
 
@@ -36,7 +37,7 @@ function introLines(route: Route): Line[] {
 }
 
 /** 活動範囲モード（第1話クリアで解放）。いつもの区間の中で遊べる短い補正 */
-export function CommuteScreen({ name, onBack }: Props) {
+export function CommuteScreen({ name, dev = false, onBack }: Props) {
   const [save, setSave] = useState<CommuteSave>(loadCommute);
   const [phase, setPhase] = useState<Phase>(save.route ? 'menu' : 'setup');
   const [step, setStep] = useState(0);
@@ -44,7 +45,8 @@ export function CommuteScreen({ name, onBack }: Props) {
   const [subIdx, setSubIdx] = useState(0);
 
   const today = todayKey();
-  const doneToday = save.lastDone === today;
+  // 開発モードでは、1日1回の制限をなくす
+  const doneToday = save.lastDone === today && !dev;
 
   function update(next: CommuteSave) {
     setSave(next);
@@ -131,6 +133,38 @@ export function CommuteScreen({ name, onBack }: Props) {
               <li>人や、他人の画面を撮影しないでください。</li>
             </ul>
           </section>
+
+          {dev && (
+            <section className="card dev-panel" aria-label="開発モード">
+              <p className="label">DEV 開発モード（1日1回の制限なし）</p>
+              <div className="actions">
+                <button
+                  type="button"
+                  className="btn secondary"
+                  onClick={() => {
+                    if (save.route) setOffer(pickOfferStation(save.route));
+                    setPhase('offer');
+                  }}
+                >
+                  途中下車の連絡を出す
+                </button>
+                {SUB_STORIES.map((st, i) => (
+                  <button
+                    key={st.title}
+                    type="button"
+                    className="btn ghost"
+                    onClick={() => {
+                      if (save.route) setOffer(pickOfferStation(save.route));
+                      setSubIdx(i);
+                      setPhase('sub');
+                    }}
+                  >
+                    サブストーリー{i + 1}：{st.title}
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
 
           <div className="actions">
             <button

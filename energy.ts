@@ -49,3 +49,8 @@ export function spendEnergy(now: number = Date.now()): boolean {
   write({ value: value - 1, at });
   return true;
 }
+
+/** 開発用：協力ゲージを満タンに戻す */
+export function resetEnergy(now: number = Date.now()): void {
+  write({ value: ENERGY_MAX, at: now });
+}

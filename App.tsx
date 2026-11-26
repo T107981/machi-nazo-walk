@@ -13,8 +13,18 @@ import { DialogueScreen } from './DialogueScreen';
 import { toLines, type Line } from './script';
 import { PlayScreen } from './PlayScreen';
 import { ClearScreen } from './ClearScreen';
+import { DailyScreen } from './DailyScreen';
+import { BigRiftScreen } from './BigRiftScreen';
+import { ARScreen } from './ARScreen';
+import { LoadingScreen } from './LoadingScreen';
+import { isDev, wipeAll } from './dev';
+import { resetEnergy } from './energy';
+import kvImg from './kv.jpg';
+import ryukaImg from './ryuka.webp';
 
-type Screen = 'title' | 'home' | 'commute' | 'name' | 'rules' | 'dialogue' | 'play' | 'clear';
+const DEV = isDev();
+
+type Screen = 'title' | 'home' | 'commute' | 'daily' | 'bigrift' | 'ar' | 'name' | 'rules' | 'dialogue' | 'play' | 'clear';
 /** 会話画面の種類：謎の前 / 謎のあと / 結末 */
 type Scene = 'intro' | 'outro' | 'ending';
 
@@ -74,6 +84,26 @@ export default function App() {
   const [name, setName] = useState<string | null>(loadName);
   // 名前画面のあと、ゲームを始めるのか・ホームへ戻るのか
   const [afterName, setAfterName] = useState<'start' | 'home'>('start');
+  const [ready, setReady] = useState(false);
+
+  // 起動時：画像を読み込んでから、タイトルを出す（最低でも少しだけローディングを見せる）
+  useEffect(() => {
+    let alive = true;
+    const load = (src: string) =>
+      new Promise<void>((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+        img.src = src;
+      });
+    const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+    void Promise.race([Promise.all([load(kvImg), load(ryukaImg), wait(1300)]), wait(5000)]).then(
+      () => alive && setReady(true),
+    );
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   // 進行状況を端末内に保存（再読み込みしても続きから遊べる）
   useEffect(() => {
@@ -120,7 +150,8 @@ export default function App() {
   /** タイトルをタップしたとき：初回は第1話が自動で始まる。クリア後はホームへ */
   function handleTitleStart() {
     if (!state) {
-      setScreen('rules');
+      // 開発モードでは、第1話を飛ばしてホームへ（ホームの DEV パネルから試せる）
+      setScreen(DEV ? 'home' : 'rules');
     } else if (!state.clearedAt) {
       resumeGame();
     } else {
@@ -229,6 +260,31 @@ export default function App() {
 
   const codename = name ?? 'ナナシ';
 
+  /** 開発用：第1話をクリア済みにして、あとの機能を試せるようにする */
+  function devClear() {
+    const now = new Date().toISOString();
+    setState({
+      storyId: STORY.id,
+      sessionId: null,
+      mode: 'anywhere',
+      stageIndex: STORY.stages.length - 1,
+      solved: true,
+      hintsShown: 0,
+      hintsTotal: 0,
+      wrongTotal: 0,
+      startedAt: now,
+      clearedAt: now,
+    });
+    resetEnergy();
+  }
+
+  function devWipe() {
+    wipeAll();
+    window.location.reload();
+  }
+
+  if (!ready) return <LoadingScreen />;
+
   return (
     <div className="app">
       {screen === 'title' && <TitleScreen onStart={handleTitleStart} />}
@@ -240,6 +296,12 @@ export default function App() {
           onStartNew={() => setScreen('rules')}
           codename={name}
           onCommute={() => setScreen('commute')}
+          onDaily={() => setScreen('daily')}
+          onBigRift={() => setScreen('bigrift')}
+          onAR={() => setScreen('ar')}
+          dev={DEV}
+          onDevClear={devClear}
+          onDevWipe={devWipe}
           onEditName={() => {
             setAfterName('home');
             setScreen('name');
@@ -247,7 +309,10 @@ export default function App() {
           onBack={() => setScreen('title')}
         />
       )}
-      {screen === 'commute' && <CommuteScreen name={codename} onBack={() => setScreen('home')} />}
+      {screen === 'commute' && <CommuteScreen name={codename} dev={DEV} onBack={() => setScreen('home')} />}
+      {screen === 'daily' && <DailyScreen onBack={() => setScreen('home')} />}
+      {screen === 'bigrift' && <BigRiftScreen onBack={() => setScreen('home')} />}
+      {screen === 'ar' && <ARScreen dev={DEV} onBack={() => setScreen('home')} />}
       {screen === 'name' && (
         <NameScreen
           initial={name}
